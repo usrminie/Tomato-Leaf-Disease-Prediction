@@ -1,158 +1,85 @@
-import { useState, useEffect } from "react";
-import { makeStyles, withStyles } from "@material-ui/core/styles";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
-import Avatar from "@material-ui/core/Avatar";
-import Container from "@material-ui/core/Container";
-import React from "react";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
+import { useState, useEffect, useCallback } from "react";
+import { makeStyles } from "@material-ui/core/styles";
 import {
-  Paper,
+  AppBar,
+  Toolbar,
+  Typography,
+  Avatar,
+  Card,
+  CardContent,
   CardActionArea,
   CardMedia,
-  Grid,
   TableContainer,
   Table,
   TableBody,
-  TableHead,
-  TableRow,         
+  TableRow,
   TableCell,
   Button,
   CircularProgress,
+  Paper,
 } from "@material-ui/core";
-import cblogo from "./cblogo.PNG";
-import image from "./bg.png";
 import { DropzoneArea } from "material-ui-dropzone";
-import { common } from "@material-ui/core/colors";
 import Clear from "@material-ui/icons/Clear";
+import cblogo from "./logo.jpg";
+import image from "./bg.png";
+import axios from "axios";
 
-const ColorButton = withStyles((theme) => ({
-  root: {
-    color: theme.palette.getContrastText(common.white),
-    backgroundColor: common.white,
-    "&:hover": {
-      backgroundColor: "#ffffff7a",
-    },
-  },
-}))(Button);
-const axios = require("axios").default;
-
+// Custom Styles
 const useStyles = makeStyles((theme) => ({
+  appbar: {
+    background: "#236135",
+    boxShadow: "none",
+    color: "white",
+  },
   grow: {
     flexGrow: 1,
   },
-  clearButton: {
-    width: "-webkit-fill-available",
-    borderRadius: "15px",
-    padding: "15px 22px",
-    color: "#000000a6",
-    fontSize: "20px",
-    fontWeight: 900,
-  },
-  root: {
-    maxWidth: 345,
-    flexGrow: 1,
-  },
-  media: {
-    height: 400,
-    // width: 350
-  },
-  paper: {
-    padding: theme.spacing(2),
-    margin: "auto",
-    maxWidth: 500,
-  },
-  gridContainer: {
-    justifyContent: "center"
-  },
-  mainContainer: {
+  container: {
     backgroundImage: `url(${image})`,
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
     backgroundSize: "cover",
-    height: `calc(100vh - 64px)`,
-    backgroundColor: `white`
-  },
-  imageCard: {
-    margin: "auto",
-    width: 400,
-    height: 500,
-    backgroundColor: "transparent",
-    boxShadow: "0px 9px 70px 0px rgb(0 0 0 / 30%) !important",
-    borderRadius: "15px",
-  },
-  imageCardEmpty: {
-    height: "auto",
-  },
-  noImage: {
-    margin: "auto",
-    width: 400,
-    height: "400 !important",
-  },
-  input: {
-    display: "none",
-  },
-  uploadIcon: {
-    background: "white",
-  },
-  tableContainer: {
-    backgroundColor: "transparent !important",
-    boxShadow: "none !important",
-  },
-  table: {
-    backgroundColor: "transparent !important",
-  },
-  tableHead: {
-    backgroundColor: "transparent !important",
-  },
-  tableRow: {
-    backgroundColor: "transparent !important",
-  },
-  tableCell: {
-    fontSize: "22px",
-    backgroundColor: "transparent !important",
-    borderColor: "transparent !important",
-    color: "#000000a6 !important",
-    fontWeight: "bolder",
-    padding: "1px 24px 1px 16px",
-  },
-  tableCell1: {
-    fontSize: "14px",
-    backgroundColor: "transparent !important",
-    borderColor: "transparent !important",
-    color: "#000000a6 !important",
-    fontWeight: "bolder",
-    padding: "1px 24px 1px 16px",
-  },
-  tableBody: {
-    backgroundColor: "transparent !important",
-  },
-  text: {
-    color: "white !important",
-    textAlign: "center",
-  },
-  buttonGrid: {
-    maxWidth: "416px",
-    width: "100%",
-  },
-  detail: {
-    backgroundColor: "white",
+    height: "100vh",
     display: "flex",
     justifyContent: "center",
-    flexDirection: "column",
     alignItems: "center",
   },
-  appbar: {
-    background: "#be6a77",
-    boxShadow: "none",
-    color: "white",
+  card: {
+    maxWidth: 400,
+    background: "rgba(255, 255, 255, 0.85)",
+    boxShadow: "0px 12px 60px rgba(0, 0, 0, 0.2)",
+    borderRadius: "20px",
+    overflow: "hidden",
+  },
+  cardEmpty: {
+    padding: "20px",
+    textAlign: "center",
+  },
+  media: {
+    height: 300,
+  },
+  table: {
+    marginTop: theme.spacing(2),
+  },
+  tableCell: {
+    fontSize: "18px",
+    fontWeight: 600,
   },
   loader: {
-    color: "#be6a77 !important",
+    margin: theme.spacing(2),
+  },
+  clearButton: {
+    marginTop: theme.spacing(2),
+    width: "100%",
+    fontSize: "18px",
+    fontWeight: 700,
+  },
+  dropzoneText: {
+    color: "black", // Change this to your desired text color
   },
 }));
+
+// Main Component
 const Home = () => {
   const classes = useStyles();
   const [selectedFile, setSelectedFile] = useState();
@@ -162,22 +89,18 @@ const Home = () => {
   const [isLoading, setIsloading] = useState(false);
   let confidence = 0;
 
-  const sendFile = async () => {
+  // File Upload Functionality
+  const sendFile = useCallback(async () => {
     if (image) {
       let formData = new FormData();
       formData.append("file", selectedFile);
-      let res = await axios({
-        method: "post",
-        url: 'https://api-production-0a11.up.railway.app/predict',
-        // url: process.env.REACT_APP_API_URL,
-        data: formData,
-      });
+      let res = await axios.post("https://api-production-0a11.up.railway.app/predict", formData);
       if (res.status === 200) {
         setData(res.data);
       }
       setIsloading(false);
     }
-  };
+  }, [image, selectedFile]);
 
   const clearData = () => {
     setData(null);
@@ -193,15 +116,15 @@ const Home = () => {
     }
     const objectUrl = URL.createObjectURL(selectedFile);
     setPreview(objectUrl);
+    // Clean up URL object
+    return () => URL.revokeObjectURL(objectUrl);
   }, [selectedFile]);
 
   useEffect(() => {
-    if (!preview) {
-      return;
-    }
+    if (!preview) return;
     setIsloading(true);
     sendFile();
-  }, [preview]);
+  }, [preview, sendFile]);
 
   const onSelectFile = (files) => {
     if (!files || files.length === 0) {
@@ -220,132 +143,79 @@ const Home = () => {
   }
 
   return (
-    <React.Fragment>
+    <>
       <AppBar position="static" className={classes.appbar}>
         <Toolbar>
-          <Typography className={classes.title} variant="h6" noWrap>
-            KSRR: Tomato Disease Classification
+          <Typography variant="h6" noWrap>
+            Tomato Disease Classification
           </Typography>
           <div className={classes.grow} />
           <Avatar src={cblogo}></Avatar>
         </Toolbar>
       </AppBar>
-      <Container
-        maxWidth={false}
-        className={classes.mainContainer}
-        disableGutters={true}
-      >
-        <Grid
-          className={classes.gridContainer}
-          container
-          direction="row"
-          justifyContent="center"
-          alignItems="center"
-        >
-          <Grid style={{ transform: `scale(0.7)`, display:`flex`, flexFlow:`column`, alignItems:`center`, width:`500px` }} item xs={12}>
-            <Card
-              className={`${classes.imageCard} ${
-                !image ? classes.imageCardEmpty : ""
-              }`}
-            >
-              {image && (
-                <CardActionArea>
-                  <CardMedia
-                    className={classes.media}
-                    image={preview}
-                    component="image"
-                    title="Contemplative Reptile"
-                  />
-                </CardActionArea>
-              )}
-              {!image && (
-                <CardContent className={classes.content}>
-                  <DropzoneArea
-                    acceptedFiles={["image/*"]}
-                    dropzoneText={
-                      "Drag and drop an image of a potato plant leaf to process"
-                    }
-                    onChange={onSelectFile}
-                  />
-                </CardContent>
-              )}
-              {data && (
-                <CardContent className={classes.detail}>
-                  <TableContainer
-                    component={Paper}
-                    className={classes.tableContainer}
-                  >
-                    <Table
-                      className={classes.table}
-                      size="small"
-                      aria-label="simple table"
-                    >
-                      <TableHead className={classes.tableHead}>
-                        <TableRow className={classes.tableRow}>
-                          <TableCell className={classes.tableCell1}>
-                            Label:
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            className={classes.tableCell1}
-                          >
-                            Confidence:
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody className={classes.tableBody}>
-                        <TableRow className={classes.tableRow}>
-                          <TableCell
-                            component="th"
-                            scope="row"
-                            className={classes.tableCell}
-                          >
-                            {data.class}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            className={classes.tableCell}
-                          >
-                            {confidence}%
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              )}
-              {isLoading && (
-                <CardContent className={classes.detail}>
-                  <CircularProgress
-                    color="secondary"
-                    className={classes.loader}
-                  />
-                  <Typography className={classes.title} variant="h6" noWrap>
-                    Processing
-                  </Typography>
-                </CardContent>
-              )}
-            </Card>
 
-            {data && (
-              <Grid style={{marginTop:`10px`}} item className={classes.buttonGrid}>
-                <ColorButton
-                  variant="contained"
-                  className={classes.clearButton}
-                  color="primary"
-                  component="span"
-                  size="large"
-                  onClick={clearData}
-                  startIcon={<Clear fontSize="large" />}
-                >
-                  Clear
-                </ColorButton>
-              </Grid>
-            )}
-          </Grid>
-        </Grid>
-      </Container>
-    </React.Fragment>
+      <div className={classes.container}>
+        <Card className={`${classes.card} ${!image ? classes.cardEmpty : ""}`}>
+          {image ? (
+            <CardActionArea>
+              <CardMedia className={classes.media} image={preview} />
+            </CardActionArea>
+          ) : (
+            <CardContent className={classes.cardEmpty}>
+              <DropzoneArea
+                acceptedFiles={["image/*"]}
+                dropzoneText={"Drag and drop a tomato leaf image"}
+                onChange={onSelectFile}
+                showAlerts={false}
+                maxFileSize={5000000}
+                filesLimit={1}
+                dropzoneClass={classes.dropzoneText} // Apply the custom class here
+              />
+            </CardContent>
+          )}
+
+          {data && (
+            <CardContent>
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableRow>
+                    <TableCell className={classes.tableCell}>Label</TableCell>
+                    <TableCell className={classes.tableCell} align="right">
+                      Confidence
+                    </TableCell>
+                  </TableRow>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>{data.class}</TableCell>
+                      <TableCell align="right">{confidence}%</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          )}
+
+          {isLoading && (
+            <CardContent className={classes.loader}>
+              <CircularProgress className={classes.loader} />
+              <Typography variant="h6">Processing</Typography>
+            </CardContent>
+          )}
+        </Card>
+
+        {data && (
+          <Button
+            variant="contained"
+            color="secondary"
+            className={classes.clearButton}
+            onClick={clearData}
+            startIcon={<Clear />}
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+    </>
   );
 };
 
